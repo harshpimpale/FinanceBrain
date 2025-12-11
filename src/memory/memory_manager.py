@@ -38,7 +38,6 @@ class MemoryManager:
         if vector_store is None:
             raise RuntimeError("Vector store not initialized")
         
-        # Wrap LLM with rate limiter
         llm = get_llm()
         
         blocks = [
