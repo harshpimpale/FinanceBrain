@@ -1,0 +1,29 @@
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+class Settings:
+    """Application configuration settings"""
+    
+    # API Keys
+    GROQ_API_KEY = os.getenv("API_KEY")
+    GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
+    
+    # Model Configuration
+    LLM_MODEL = os.getenv("GROQ_MODEL", "openai/gpt-oss-20b")
+    EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL", "text-embedding-004")
+    
+    # Paths
+    VECTOR_DB_PATH = "./VectorDB/chroma_db"
+    MEMORY_DB_PATH = "./VectorDB/MemoryBase"
+    DOCUMENTS_PATH = "./data/documents"
+    
+    # Memory Configuration
+    MEMORY_TOKEN_LIMIT = 30000
+    MAX_FACTS = 50
+
+    # Retrieval Configuration
+    SIMILARITY_TOP_K = 5
+
+settings = Settings()
