@@ -2,6 +2,7 @@
 
 
 from src.llm.models import get_llm
+from src.llm.rate_limiter import rate_limiter
 from src.retrieval.retriever import RetrieverTool
 from src.utils.logger import setup_logger
 
@@ -51,7 +52,10 @@ class SubqueriesOperations:
         prompt = DECOMPOSE_PROMPT.format(query=query)
         
         # Decompose query
-        response = self.llm.complete(prompt)
+        response = await rate_limiter.call_with_limit(
+            self.llm.complete,
+            prompt
+        )
         
         # Parse sub-queries
         response_text = str(response)
@@ -98,7 +102,10 @@ class SubqueriesOperations:
         )
         
         # Synthesize final answer
-        response = self.llm.complete(prompt)
+        response = await rate_limiter.call_with_limit(
+            self.llm.complete,
+            prompt
+        )
         
         final_answer = str(response)
         print("Final synthesized answer generated.")
