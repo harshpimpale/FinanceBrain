@@ -6,6 +6,9 @@ from llama_index.core.memory import (
 from src.llm.models import get_llm, get_embed_model
 from src.memory.memory_loader import MemoryLoader
 from src.config.settings import settings
+from src.utils.logger import setup_logger
+
+logger = setup_logger(__name__)
 
 class MemoryManager:
     """
@@ -15,6 +18,7 @@ class MemoryManager:
     
     def __init__(self, session_id: str = "default_session"):
         self.session_id = session_id
+        logger.info(f"Initializing MemoryManager for session: {session_id}")
         
         # Initialize long-term memory blocks
         long_term_blocks = self._create_long_term_blocks()
@@ -28,6 +32,8 @@ class MemoryManager:
             memory_blocks=long_term_blocks,
             insert_method="user",
         )
+        
+        logger.info("MemoryManager initialized successfully")
     
     def _create_long_term_blocks(self):
         """Create long-term memory blocks with rate-limited LLM"""
@@ -55,6 +61,7 @@ class MemoryManager:
             ),
         ]
         
+        logger.info(f"Created {len(blocks)} long-term memory blocks")
         return blocks
     
     def get_memory(self):
@@ -67,5 +74,5 @@ class MemoryManager:
             context = self.memory.get()
             return str(context)
         except Exception as e:
-            print(f"Error retrieving memory context: {e}")
+            logger.error(f"Failed to get memory context: {e}")
             return ""

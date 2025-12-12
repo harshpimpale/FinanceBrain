@@ -9,6 +9,9 @@ from llama_index.vector_stores.chroma import ChromaVectorStore
 import chromadb
 from src.llm.models import get_embed_model
 from src.config.settings import settings
+from src.utils.logger import setup_logger
+
+logger = setup_logger(__name__)
 
 class DocumentLoader:
     """Loads documents and creates/manages vector store index"""
@@ -17,12 +20,14 @@ class DocumentLoader:
         self.documents_path = documents_path
         self.vector_store_path = settings.VECTOR_DB_PATH
         self.index = None
+        logger.info(f"DocumentLoader initialized: {self.documents_path}")
     
     def get_chroma_collection(self):
         """Get or create Chroma collection for documents"""
         os.makedirs(self.vector_store_path, exist_ok=True)
         chroma_client = chromadb.PersistentClient(path=self.vector_store_path)
         chroma_collection = chroma_client.get_or_create_collection("documents")
+        logger.info("Document collection loaded")
         return chroma_collection
     
     def load_documents(self) -> VectorStoreIndex:
@@ -32,11 +37,13 @@ class DocumentLoader:
         
         # Check if index already exists
         if chroma_collection.count() > 0:
+            logger.info("Loading existing vector index...")
             self.index = VectorStoreIndex.from_vector_store(
                 vector_store=vector_store,
                 embed_model=get_embed_model()
             )
         else:
+            logger.info("Creating new vector index from documents...")
             
             # Check if documents directory exists
             if not os.path.exists(self.documents_path):
@@ -50,6 +57,8 @@ class DocumentLoader:
                 file_extractor={".pdf": PyMuPDFReader()}
             ).load_data()
             
+            logger.info(f"Loaded {len(documents)} documents")
+            
             # Create storage context
             storage_context = StorageContext.from_defaults(
                 vector_store=vector_store
@@ -62,6 +71,8 @@ class DocumentLoader:
                 embed_model=get_embed_model(),
                 show_progress=True
             )
+            
+            logger.info("Vector index created successfully")
         
         return self.index
     

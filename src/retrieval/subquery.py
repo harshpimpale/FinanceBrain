@@ -3,6 +3,9 @@
 
 from src.llm.models import get_llm
 from src.retrieval.retriever import RetrieverTool
+from src.utils.logger import setup_logger
+
+logger = setup_logger(__name__)
 
 
 DECOMPOSE_PROMPT = """
@@ -70,7 +73,8 @@ class SubqueriesOperations:
         sub_queries_and_contexts = []
         
         for sub_query in sub_queries:
-            
+            logger.info(f"Retrieving for sub-query: {sub_query}")
+
             # Retrieve relevant documents
             nodes = await self.retriever_tool.retrieve(sub_query)
             context = self.retriever_tool.get_text_from_nodes(nodes)

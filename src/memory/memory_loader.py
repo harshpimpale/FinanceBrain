@@ -2,6 +2,9 @@ import os
 import chromadb
 from llama_index.vector_stores.chroma import ChromaVectorStore
 from src.config.settings import settings
+from src.utils.logger import setup_logger
+
+logger = setup_logger(__name__)
 
 class MemoryLoader:
     """Loads and manages the persistent memory vector store"""
@@ -12,6 +15,7 @@ class MemoryLoader:
         self.persist_path = persist_path or settings.MEMORY_DB_PATH
         self.collection_name = collection_name
         self.vector_store = None
+        logger.info(f"MemoryLoader initialized: {self.persist_path}")
     
     def get_chroma_collection(self):
         """Get or create Chroma collection for memory"""
@@ -22,8 +26,10 @@ class MemoryLoader:
             chroma_collection = chroma_client.get_or_create_collection(
                 self.collection_name
             )
+            logger.info(f"Memory collection loaded: {self.collection_name}")
             return chroma_collection
         except Exception as e:
+            logger.error(f"Failed to load memory collection: {e}")
             raise
     
     def load_memory(self) -> ChromaVectorStore:

@@ -64,9 +64,9 @@ if query:
 
     # Run workflow asynchronously inside Streamlit
     final_result = asyncio.run(run_workflow(query))
-    print(final_result)
+
+    # Extract answer
     answer = final_result["answer"] or "⚠️ No answer returned by workflow"
-    print(answer)
 
     # Update assistant message
     with st.chat_message("assistant"):

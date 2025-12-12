@@ -1,6 +1,9 @@
 from llama_index.llms.groq import Groq
 from llama_index.embeddings.google_genai import GoogleGenAIEmbedding
 from src.config.settings import settings
+from src.utils.logger import setup_logger
+
+logger = setup_logger(__name__)
 
 class ModelManager:
     """Manages LLM and embedding models"""

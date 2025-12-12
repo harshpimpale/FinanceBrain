@@ -17,7 +17,9 @@ from src.memory.memory_manager import MemoryManager
 from src.retrieval.retriever import RetrieverTool
 from src.tools.keyword_extracter import KeywordExtractorTool
 from src.retrieval.subquery import SubqueriesOperations
+from src.utils.logger import setup_logger
 
+logger = setup_logger(__name__)
 
 
 class ResearchWorkflow(Workflow):
@@ -43,16 +45,16 @@ class ResearchWorkflow(Workflow):
     async def query_decomposition(self, ev: StartEvent) -> QueryEvent:
         """Step 1: Extract keywords and check memory"""
         query = ev.query
-        print(f"[Step 1] Query Decomposition - Query: {query}")
+        logger.info(f"[Step 1] Query Decomposition - Query: {query}")
         
         # Extract keywords
         keywords = await self.keyword_tool.extract(query)
-        print(f"Extracted keywords: {keywords}")
+        logger.info(f"Extracted keywords: {keywords}")
         
         # Get memory context
         memory_context = self.memory_manager.get_context()
         if memory_context:
-            print("Retrieved memory context")
+            logger.info("Retrieved memory context")
         
         return QueryEvent(query=query)
     
@@ -60,11 +62,11 @@ class ResearchWorkflow(Workflow):
     async def create_sub_queries(self, ev: QueryEvent) -> SubQueriesEvent:
         """Step 2: Decompose complex query into sub-queries"""
         query = ev.query
-        print(f"[Step 2] Creating sub-queries for: {query}")
+        logger.info(f"[Step 2] Creating sub-queries for: {query}")
         
         sub_queries = await self.subquery_operations.create_sub_queries(query)
         
-        print(f"Generated {len(sub_queries)} sub-queries: {sub_queries}")
+        logger.info(f"Generated {len(sub_queries)} sub-queries: {sub_queries}")
         
         return SubQueriesEvent(
             sub_queries=sub_queries,
@@ -74,11 +76,11 @@ class ResearchWorkflow(Workflow):
     @step
     async def retrieve_for_sub_queries(self, ev: SubQueriesEvent) -> RetrievalEvent:
         """Step 3: Retrieve context for each sub-query"""
-        print(f"[Step 3] Retrieving context for {len(ev.sub_queries)} sub-queries")
+        logger.info(f"[Step 3] Retrieving context for {len(ev.sub_queries)} sub-queries")
         
         sub_queries_and_contexts = await self.subquery_operations.retrieve_for_sub_queries(ev.sub_queries)
         
-        print("All contexts retrieved")
+        logger.info("All contexts retrieved")
         
         return RetrievalEvent(
             original_query=ev.original_query,
@@ -88,14 +90,14 @@ class ResearchWorkflow(Workflow):
     @step
     async def synthesize_answer(self, ev: RetrievalEvent) -> StopEvent:
         """Step 4: Synthesize final answer from all contexts"""
-        print("[Step 4] Synthesizing final answer")
+        logger.info("[Step 4] Synthesizing final answer")
         
         final_answer = await self.subquery_operations.synthesize_final_answer(
             original_query=ev.original_query,
             sub_queries_and_contexts=ev.sub_queries_and_contexts
         )
 
-        print("Final answer synthesized")
+        logger.info("Final answer synthesized")
         
         # Store in memory using proper ChatMessage objects
         memory = self.memory_manager.get_memory()
@@ -104,7 +106,7 @@ class ResearchWorkflow(Workflow):
             ChatMessage(role=MessageRole.ASSISTANT, content=final_answer)
         ])
         
-        print("Conversation stored in memory")
+        logger.info("Conversation stored in memory")
         
         return StopEvent(result={
             "answer": final_answer,
