@@ -8,9 +8,9 @@ logger = setup_logger(__name__)
 class RetrieverTool:
     """Tool for retrieving relevant documents"""
     
-    def __init__(self, index: VectorStoreIndex, top_k: int = None):
+    def __init__(self, index: VectorStoreIndex, top_k: int = settings.SIMILARITY_TOP_K):
         self.index = index
-        self.top_k = top_k or settings.SIMILARITY_TOP_K
+        self.top_k = top_k 
         self.retriever = index.as_retriever(similarity_top_k=self.top_k)
         logger.info(f"RetrieverTool initialized with top_k={self.top_k}")
     
