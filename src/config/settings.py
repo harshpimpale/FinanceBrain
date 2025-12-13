@@ -5,6 +5,13 @@ load_dotenv()
 
 class Settings:
     """Application configuration settings"""
+
+    def __init__(self):
+        if not self.GROQ_API_KEY:
+            raise ValueError("GROQ_API_KEY not found in environment")
+        if not self.GOOGLE_API_KEY:
+            raise ValueError("GOOGLE_API_KEY not found in environment")
+
     
     # API Keys
     GROQ_API_KEY = os.getenv("API_KEY")

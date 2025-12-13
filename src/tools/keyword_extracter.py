@@ -1,5 +1,6 @@
 from llama_index.core.extractors import KeywordExtractor
 from llama_index.core.schema import TextNode
+from src.llm.rate_limiter import rate_limiter
 from src.llm.models import get_llm
 KEYWORD_PROMPT = """
 You are a keyword extraction assistant.
@@ -32,7 +33,10 @@ class KeywordExtractorTool:
             keywords=self.max_keywords,
         )
         
-        metadata_list = extractor.extract([node])
+        metadata_list = await rate_limiter.call_with_limit(
+            extractor.extract,
+            [node]
+        )
         
         meta = metadata_list[0]
         kw_str = meta.get("excerpt_keywords") or ""

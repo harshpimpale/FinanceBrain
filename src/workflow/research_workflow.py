@@ -101,19 +101,22 @@ class ResearchWorkflow(Workflow):
         """
         Step 3: Retrieve relevant contexts
         """
-        logger.info(f"[Step 3] Retrieving contexts for {len(ev.sub_queries)} sub-queries")
-        
-        sub_queries_and_contexts = await self.subquery_operations.retrieve_for_sub_queries(
-            ev.sub_queries
-        )
-        
-        logger.info("All contexts retrieved")
-        
-        return RetrievalEvent(
-            original_query=ev.original_query,
-            sub_queries_and_contexts=sub_queries_and_contexts,
-            keywords=ev.keywords
-        )
+        try:
+            logger.info(f"[Step 3] Retrieving contexts for {len(ev.sub_queries)} sub-queries")
+            
+            sub_queries_and_contexts = await self.subquery_operations.retrieve_for_sub_queries(
+                ev.sub_queries
+            )
+            
+            logger.info("All contexts retrieved")
+            return RetrievalEvent(
+                original_query=ev.original_query,
+                sub_queries_and_contexts=sub_queries_and_contexts,
+                keywords=ev.keywords
+            )
+        except Exception as e:
+            logger.error(f"Retrieval failed: {e}")
+            raise e
     
     @step
     async def summarize_contexts(self, ev: RetrievalEvent) -> RetrievalEvent:
