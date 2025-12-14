@@ -1,16 +1,22 @@
 # app.py
-
 import streamlit as st
 import asyncio
-import nest_asyncio
+import sys
 
-# Apply nest_asyncio to fix event loop issues
+# Configure asyncio event loop BEFORE nest_asyncio
+if sys.platform == 'win32':
+    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+else:
+    # Use default policy to avoid uvloop
+    asyncio.set_event_loop_policy(asyncio.DefaultEventLoopPolicy())
+
+# Now apply nest_asyncio
+import nest_asyncio
 nest_asyncio.apply()
 
 from src.loader.document_loader import DocumentLoader
 from src.workflow.research_workflow import ResearchWorkflow
 from src.memory.memory_manager import MemoryManager
-
 
 # --------- Cached Resources ---------
 @st.cache_resource
@@ -19,7 +25,6 @@ def initialize_system():
     loader = DocumentLoader()
     index = loader.load_documents()
     return index
-
 
 # --------- Helpers ---------
 async def run_workflow(query: str, index, memory_manager):
@@ -31,14 +36,11 @@ async def run_workflow(query: str, index, memory_manager):
         memory_manager=memory_manager,
         timeout=180
     )
-    
     result = await wf.run(query=query)
     return result
 
-
 # --------- Streamlit UI ---------
 st.set_page_config(page_title="FinanceBrain Chat", page_icon="💬")
-
 st.title("💬 FinanceBrain — Research Chatbot")
 
 # Initialize system
@@ -57,11 +59,11 @@ for msg in st.session_state.messages:
     with st.chat_message(msg["role"]):
         st.write(msg["content"])
         
-        # Show sub-queries if available
-        if msg["role"] == "assistant" and "sub_queries" in msg:
-            with st.expander("🔍 Query Decomposition"):
-                for i, sq in enumerate(msg["sub_queries"], 1):
-                    st.markdown(f"{i}. {sq}")
+    # Show sub-queries if available
+    if msg["role"] == "assistant" and "sub_queries" in msg:
+        with st.expander("🔍 Query Decomposition"):
+            for i, sq in enumerate(msg["sub_queries"], 1):
+                st.markdown(f"{i}. {sq}")
 
 # Chat input
 if query := st.chat_input("Ask something about finance, investing, economics..."):
@@ -77,8 +79,8 @@ if query := st.chat_input("Ask something about finance, investing, economics..."
                 # Run workflow with nest_asyncio support
                 final_result = asyncio.run(
                     run_workflow(
-                        query, 
-                        index, 
+                        query,
+                        index,
                         st.session_state.memory_manager
                     )
                 )
@@ -104,7 +106,7 @@ if query := st.chat_input("Ask something about finance, investing, economics..."
                 
                 # Save assistant message
                 st.session_state.messages.append({
-                    "role": "assistant", 
+                    "role": "assistant",
                     "content": answer,
                     "sub_queries": sub_queries,
                     "keywords": keywords
