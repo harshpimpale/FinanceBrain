@@ -18,7 +18,8 @@ class MemoryManager:
     
     def __init__(self, session_id: str = "default_session"):
         self.session_id = session_id
-        logger.info(f"Initializing MemoryManager for session: {session_id}")
+        # logger.info(f"Initializing MemoryManager for session: {session_id}")
+        logger.info(f"Initializing MemoryManager")
         
         # Initialize long-term memory blocks
         long_term_blocks = self._create_long_term_blocks()

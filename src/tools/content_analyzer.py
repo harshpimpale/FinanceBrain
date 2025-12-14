@@ -245,7 +245,7 @@ Entities:
                 structure["document_type"] = line.split(':', 1)[-1].strip()
             elif 'style:' in line.lower():
                 structure["writing_style"] = line.split(':', 1)[-1].strip()
-            elif line.startswith(('-', '•', '*', str)):
+            elif line.startswith(('-', '•', '*')):
                 section = line.lstrip('-•* 0123456789.').strip()
                 if section:
                     structure["sections"].append(section)

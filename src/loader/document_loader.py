@@ -4,7 +4,7 @@ from llama_index.core import (
     SimpleDirectoryReader,
     StorageContext
 )
-from llama_index.readers.file import PyMuPDFReader
+# from llama_index.readers.file import PyMuPDFReader
 from llama_index.vector_stores.chroma import ChromaVectorStore
 import chromadb
 from src.llm.models import get_embed_model
@@ -53,8 +53,7 @@ class DocumentLoader:
             
             # Load documents
             documents = SimpleDirectoryReader(
-                input_dir=self.documents_path,
-                file_extractor={".pdf": PyMuPDFReader()}
+                input_dir=self.documents_path
             ).load_data()
             
             logger.info(f"Loaded {len(documents)} documents")

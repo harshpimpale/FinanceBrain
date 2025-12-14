@@ -43,11 +43,13 @@ class SubqueriesOperations:
     Subquery Synthesis:
     """
 
-    def __init__(self, index=None):
+    def __init__(self, index):
+        if index is None:
+            raise ValueError("index is required for RetrieverTool")
         self.llm = get_llm()
         self.retriever_tool = RetrieverTool(index=index)
 
-    async def create_sub_queries(self, query: str) -> str:
+    async def create_sub_queries(self, query: str) -> list[str]:
         """Plan subquery based on the main query"""
         prompt = DECOMPOSE_PROMPT.format(query=query)
         
@@ -72,7 +74,7 @@ class SubqueriesOperations:
 
         return sub_queries
     
-    async def retrieve_for_sub_queries(self, sub_queries: list[str]) -> list[str]:
+    async def retrieve_for_sub_queries(self, sub_queries: list[str]) -> list[tuple[str, str]]:
         """Retrieve answers for each sub-query"""
         sub_queries_and_contexts = []
         
@@ -88,41 +90,89 @@ class SubqueriesOperations:
         return sub_queries_and_contexts
     
 
-    async def synthesize_final_answer(self, original_query: str, sub_queries_and_contexts: list[tuple[str, str]]) -> str:
-        """Synthesize final answer from sub-query answers"""
-        # Format sub-Q&A pairs
+    async def synthesize_final_answer(
+        self, 
+        original_query: str, 
+        sub_queries_and_contexts: list[tuple[str, str]],
+        enrichment_context: str = ""  # enrichment from content analysis
+    ) -> str:
+        """
+        Synthesize a comprehensive final answer from sub-query contexts.
+        
+        Args:
+            original_query: The original user question
+            sub_queries_and_contexts: List of (sub_query, context) tuples
+            enrichment_context: Optional enrichment from content analysis
+                               (entities, themes, sentiment guidance)
+        
+        Returns:
+            Final synthesized answer
+        """
+        logger.info("Synthesizing final answer from sub-query contexts")
+        
+        # Format sub-Q&A pairs for the prompt
         sub_qa_text = ""
         for i, (sub_q, context) in enumerate(sub_queries_and_contexts, 1):
             sub_qa_text += f"\n{i}. Sub-question: {sub_q}\n"
-            sub_qa_text += f"   Context: {context[:500]}...\n"
+            # Limit context length to avoid token overflow
+            context_preview = context[:800] + "..." if len(context) > 800 else context
+            sub_qa_text += f"   Answer: {context_preview}\n"
+        
+        # Build synthesis prompt with optional enrichment
+        enrichment_section = ""
+        if enrichment_context:
+            enrichment_section = f"\nAdditional Context:\n{enrichment_context}\n"
         
         prompt = SYNTHESIS_PROMPT.format(
             original_query=original_query,
-            sub_qa_pairs=sub_qa_text
+            sub_qa_pairs=sub_qa_text,
+            enrichment_context=enrichment_section
         )
         
-        # Synthesize final answer
+        # Generate final answer with rate limiting
         response = await rate_limiter.call_with_limit(
             self.llm.complete,
             prompt
         )
         
-        final_answer = str(response)
-        print("Final synthesized answer generated.")
+        final_answer = str(response).strip()
+        logger.info(f"Final answer synthesized: {len(final_answer)} chars")
+        
         return final_answer
+
+
+# Convenience function for standalone usage
+async def handle_subqueries(
+    index, 
+    query: str,
+    enrichment_context: str = ""
+) -> str:
+    """
+    Handle complete subquery pipeline end-to-end.
     
-# Convenience function
-async def handle_subqueries(index, query: str) -> str:
-    """Handle subquery operations end-to-end"""
+    Args:
+        index: VectorStoreIndex for retrieval
+        query: User's original question
+        enrichment_context: Optional enrichment from analysis
+        
+    Returns:
+        Final synthesized answer
+    """
+    logger.info(f"Handling subqueries for: {query}")
+    
     subquery_ops = SubqueriesOperations(index=index)
     
-    # Step 1: Create sub-queries
+    # Step 1: Decompose query
     sub_queries = await subquery_ops.create_sub_queries(query)
     
-    # Step 2: Retrieve for each sub-query
+    # Step 2: Retrieve contexts
     sub_queries_and_contexts = await subquery_ops.retrieve_for_sub_queries(sub_queries)
     
     # Step 3: Synthesize final answer
-    final_answer = await subquery_ops.synthesize_final_answer(query, sub_queries_and_contexts)
+    final_answer = await subquery_ops.synthesize_final_answer(
+        original_query=query,
+        sub_queries_and_contexts=sub_queries_and_contexts,
+        enrichment_context=enrichment_context
+    )
     
     return final_answer
