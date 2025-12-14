@@ -1,0 +1,33 @@
+services:
+  financebrain:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: financebrain-app
+    ports:
+      - "8501:8501"
+    environment:
+      - API_KEY=${API_KEY}
+      - GOOGLE_API_KEY=${GOOGLE_API_KEY}
+      - GROQ_MODEL=llama-3.1-8b-instant
+      - EMBEDDING_MODEL=models/text-embedding-004
+      - MAX_REQUESTS_PER_MINUTE=30
+      - LOG_LEVEL=INFO
+    volumes:
+      # Persist vector databases
+      - ./VectorDB:/app/VectorDB
+      # Mount documents directory
+      - ./data/documents:/app/data/documents
+    restart: unless-stopped
+    networks:
+      - financebrain-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8501/_stcore/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+networks:
+  financebrain-network:
+    driver: bridge

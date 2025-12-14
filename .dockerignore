@@ -1,0 +1,58 @@
+# Python virtual environments (THIS IS THE BIG ONE!)
+myvenv/
+venv/
+env/
+ENV/
+.venv
+*.venv
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Vector databases (mounted as volumes, don't copy!)
+VectorDB/
+*.db
+*.sqlite
+
+# Documents (mounted as volume)
+data/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# Git
+.git/
+.gitignore
+
+# Documentation
+*.md
+*.pdf
+design_doc.pdf
+
+# Testing
+tests/
+*.test.py
+.pytest_cache/
+
+# Docker files
+Dockerfile*
+docker-compose*.yml
+.dockerignore
+
+# Logs
+*.log
+logs/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Environment variables
+.env
+.env.local
